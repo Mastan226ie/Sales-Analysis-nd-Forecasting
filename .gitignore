@@ -143,7 +143,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-svenv/
+svenv310/
+
 
 # Spyder project settings
 .spyderproject

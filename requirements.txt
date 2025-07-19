@@ -1,9 +1,11 @@
-pandas
-numpy
+pandas==1.5.3
 matplotlib
 seaborn
 statsmodels
 dill 
 scikit-learn
 setuptools
-#-e .
+streamlit
+pmdarima
+numpy==1.23.5
+pmdarima==2.0.4

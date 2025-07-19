@@ -5,8 +5,8 @@ import sys
 import pandas as pd
 import numpy as np
 import joblib
-from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_absolute_error
+from pmdarima import auto_arima
 from src.logger import logging
 from src.exception import CustomException
 from dataclasses import dataclass
@@ -24,32 +24,41 @@ class ModelTrainer:
 
     def train_model(self, transformed_data_path):
         try:
+            # Load data
             df = pd.read_csv(transformed_data_path, parse_dates=['Order Date'], index_col='Order Date')
-            
+
             # Train-test split (80% train, 20% test)
             size = int(len(df) * 0.8)
             train, test = df.iloc[:size], df.iloc[size:]
 
-            # Fit ARIMA
-            model = ARIMA(train, order=(1, 1, 1))  # default order; should be tuned
-            model_fit = model.fit()
+            # Train Auto ARIMA model
+            model = auto_arima(
+                train,
+                seasonal=False,
+                stepwise=True,
+                trace=True,
+                error_action='ignore',
+                suppress_warnings=True
+            )
 
             # Forecast
-            forecast = model_fit.forecast(steps=len(test))
+            forecast = model.predict(n_periods=len(test))
             mae = mean_absolute_error(test, forecast)
 
-            logging.info(f"ARIMA model trained. MAE: {mae}")
+            logging.info(f"Auto ARIMA model trained. MAE: {mae}")
             print(f"Model MAE: {mae:.2f}")
 
-            # Save the model
+            # Save model
             os.makedirs(os.path.dirname(self.model_trainer_config.model_path), exist_ok=True)
-            joblib.dump(model_fit, self.model_trainer_config.model_path)
+            joblib.dump(model, self.model_trainer_config.model_path)
 
-            logging.info("ARIMA model saved successfully.")
+            logging.info("Auto ARIMA model saved successfully.")
             return self.model_trainer_config.model_path
 
         except Exception as e:
             raise CustomException(e, sys)
+
+
 if __name__ == "__main__":
     trainer = ModelTrainer()
     trainer.train_model(transformed_data_path="artifacts/monthly_sales.csv")
