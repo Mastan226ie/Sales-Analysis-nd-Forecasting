@@ -13,7 +13,7 @@ class DataIngestion:
 
         try:
             # Read the dataset
-            df = pd.read_csv("notebook/data/Sales.csv")
+            df = pd.read_csv("notebook/data/Sales.csv",encoding='ISO-8859-1')
             logger.info(" Sales dataset read successfully")
 
             # Ensure directory exists

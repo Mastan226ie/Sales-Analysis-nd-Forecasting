@@ -5,3 +5,5 @@ seaborn
 statsmodels
 dill 
 scikit-learn
+setuptools
+#-e .
