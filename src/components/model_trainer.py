@@ -53,6 +53,9 @@ class ModelTrainer:
             logging.info(f"Auto ARIMA model trained. MAE: {mae}")
             print(f"Model MAE: {mae:.2f}")
 
+            with open("artifacts/mae.txt", "w") as f:
+                f.write(str(mae))
+
             # Save model
             os.makedirs(os.path.dirname(self.model_trainer_config.model_path), exist_ok=True)
             joblib.dump(model, self.model_trainer_config.model_path)
