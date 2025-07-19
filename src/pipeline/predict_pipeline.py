@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from src.logger import logging
 from src.exception import CustomException
 import joblib
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 class ForecastPipeline:
     def __init__(self, model_path, data_path):
@@ -14,20 +17,25 @@ class ForecastPipeline:
 
     def forecast(self, periods=6):
         try:
+            # Load model
             with open(self.model_path, 'rb') as f:
                 model = joblib.load(f)
 
+            # Load past sales data
             df = pd.read_csv(self.data_path, index_col='Order Date', parse_dates=True)
-            forecast = model.forecast(steps=periods)
-            
-            # Generate future dates
-            forecast_dates = pd.date_range(df.index[-1] + pd.DateOffset(months=1), periods=periods, freq='ME')
+            sales_series = df['Sales']
+
+            # Generate forecast
+            forecast = model.predict(n_periods=periods)
+
+            # Generate future monthly dates
+            forecast_dates = pd.date_range(sales_series.index[-1] + pd.DateOffset(months=1), periods=periods, freq='M')
             forecast_df = pd.DataFrame({'Forecast': forecast}, index=forecast_dates)
 
-            # Plotting
-            plt.figure(figsize=(12,6))
-            plt.plot(df, label='Actual Sales')
-            plt.plot(forecast_df, label='Forecasted Sales', color='orange')
+            # Plot actual and forecasted data
+            plt.figure(figsize=(12, 6))
+            plt.plot(sales_series, label='Actual Sales')
+            plt.plot(forecast_df['Forecast'], label='Forecasted Sales', color='orange')
             plt.title("Sales Forecast for Next 6 Months")
             plt.xlabel("Date")
             plt.ylabel("Sales")
@@ -35,11 +43,13 @@ class ForecastPipeline:
             plt.grid(True)
             plt.tight_layout()
 
+            # Save plot and forecast data
             os.makedirs("artifacts", exist_ok=True)
             plt.savefig("artifacts/sales_forecast_plot.png")
             forecast_df.to_csv("artifacts/sales_forecast.csv")
 
-            logging.info("Forecast plot and CSV saved successfully")
+            logging.info("Forecast plot and CSV saved successfully.")
+            print("Forecast generated and saved successfully.")
 
         except Exception as e:
             raise CustomException(e, sys)

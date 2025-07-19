@@ -27,38 +27,41 @@ class ModelTrainer:
             # Load data
             df = pd.read_csv(transformed_data_path, parse_dates=['Order Date'], index_col='Order Date')
 
-            # Train-test split (80% train, 20% test)
-            size = int(len(df) * 0.8)
-            train, test = df.iloc[:size], df.iloc[size:]
+            # Use only the sales column
+            sales_series = df['Sales']
 
-            # Train Auto ARIMA model
+            # Train-test split (80% train, 20% test)
+            size = int(len(sales_series) * 0.8)
+            train, test = sales_series.iloc[:size], sales_series.iloc[size:]
+
+            # Train Seasonal Auto ARIMA model
             model = auto_arima(
-                train,
-                seasonal=False,
-                stepwise=True,
-                trace=True,
-                error_action='ignore',
-                suppress_warnings=True
+            train,
+            seasonal=True,
+            m=12,  # Monthly seasonality
+            trace=True,
+            stepwise=True,
+            error_action='ignore',
+            suppress_warnings=True
             )
 
-            # Forecast
+            # Forecast on test data
             forecast = model.predict(n_periods=len(test))
-            mae = mean_absolute_error(test, forecast)
 
+            # Evaluate
+            mae = mean_absolute_error(test, forecast)
             logging.info(f"Auto ARIMA model trained. MAE: {mae}")
             print(f"Model MAE: {mae:.2f}")
 
             # Save model
             os.makedirs(os.path.dirname(self.model_trainer_config.model_path), exist_ok=True)
             joblib.dump(model, self.model_trainer_config.model_path)
-
             logging.info("Auto ARIMA model saved successfully.")
+
             return self.model_trainer_config.model_path
 
         except Exception as e:
             raise CustomException(e, sys)
-
-
 if __name__ == "__main__":
     trainer = ModelTrainer()
     trainer.train_model(transformed_data_path="artifacts/monthly_sales.csv")

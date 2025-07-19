@@ -23,7 +23,7 @@ class DataTransformation:
             df = df.sort_values('Order Date')
             df.set_index('Order Date', inplace=True)
 
-            monthly_sales = df['Sales'].resample('M').sum()
+            monthly_sales = df['Sales'].resample('M').sum().reset_index()
 
             os.makedirs(os.path.dirname(self.transformation_config.transformed_data_path), exist_ok=True)
             monthly_sales.to_csv(self.transformation_config.transformed_data_path)
